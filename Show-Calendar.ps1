@@ -57,7 +57,7 @@ function Write-MonthName($month, $year) {
 }
 
 function Write-DayNames {
-    Write-Host ('{1,2} {2,2} {3,2} {4,2} {5,2} {6,2} {0,2}' -f $dayNames) -NoNewLine
+    Write-Host ('{1,2} {2,2} {3,2} {4,2} {5,2} {6,2} {0,2}' -f $dayNames) -NoNewLine -ForegroundColor DarkYellow
 }
 
 function Write-Day($dayDate, $month, $currentDate) {
