@@ -3,6 +3,26 @@ $firstDayOffsets = @( 6, 0, 1, 2, 3, 4, 5 )
 $dayNames = [Globalization.CultureInfo]::CurrentCulture.DateTimeFormat.ShortestDayNames
 $monthNames = [Globalization.CultureInfo]::CurrentCulture.DateTimeFormat.MonthNames
 $monthWidth = 20
+$monthSpacingLength = 5
+$monthSpacing = ' ' * $monthSpacingLength
+
+function Get-StartOfFirstWeek($month, $year) {
+    $startDate = New-Object DateTime($year, $month, 1)
+    $firstDayOffset = $firstDayOffsets[$startDate.DayOfWeek]
+    $startDate = $startDate.AddDays(-$firstDayOffset)
+    return $startDate
+}
+
+function New-MonthState($month, $year) {
+    $startDate = Get-StartOfFirstWeek $month $year
+
+    $state = New-Object PSObject
+    $state | Add-Member NoteProperty MonthNumber $month
+    $state | Add-Member NoteProperty YearNumber $year
+    $state | Add-Member NoteProperty NextWeekStartDate $startDate
+    $state | Add-Member NoteProperty IsFinished $false
+    return $state
+}
 
 function Center-String($str, $totalWidth) {
     if ($str.Length -lt $totalWidth) {
@@ -14,18 +34,30 @@ function Center-String($str, $totalWidth) {
     return $str
 }
 
+function Get-CursorPosition {
+    return $Host.UI.RawUI.CursorPosition
+}
+
+function Set-CursorPosition($x, $y) {
+    $Host.UI.RawUI.CursorPosition = New-Object System.Management.Automation.Host.Coordinates 2, 5
+}
+
 function Get-MonthName($monthNumber) {
     return $monthNames[$monthNumber - 1]
+}
+
+function Get-CenteredMonthName($month, $year) {
+    return Center-String (Get-MonthName $month $year) $monthWidth
 }
 
 function Write-MonthName($month, $year) {
     $title = '{0} {1}' -f (Get-MonthName $month), $year
     $text = Center-String $title $monthWidth
-    Write-Host $text -ForegroundColor Yellow
+    Write-Host $text -ForegroundColor Yellow -NoNewLine
 }
 
-function Write-DayNames($NoNewLine = $false) {
-    Write-Host ('{1,2} {2,2} {3,2} {4,2} {5,2} {6,2} {0,2}' -f $dayNames) -NoNewLine:$NoNewLine
+function Write-DayNames {
+    Write-Host ('{1,2} {2,2} {3,2} {4,2} {5,2} {6,2} {0,2}' -f $dayNames) -NoNewLine
 }
 
 function Write-Day($dayDate, $month, $currentDate) {
@@ -58,11 +90,13 @@ function Write-Week($weekStartDate, $month, $currentDate) {
 
     for ($i = 0; $i -lt 7; $i++) {
         Write-Day $dayDate $month $currentDate
-        Write-Host ' ' -NoNewLine
+
+        if ($i -lt 6) {
+            Write-Host ' ' -NoNewLine
+        }
+
         $dayDate = $dayDate.AddDays(1)
     }
-
-    Write-Host
 }
 
 function Show-Month($month, $year, $currentDate) {
@@ -79,8 +113,67 @@ function Show-Month($month, $year, $currentDate) {
     while ($startDate.Month -eq $month)
 }
 
+function Write-Spacing {
+    Write-Host $monthSpacing -NoNewLine
+}
+
+function Write-MonthNames($months) {
+    foreach ($month in $months) {
+        Write-MonthName $month.MonthNumber $month.YearNumber
+        Write-Spacing
+    }
+}
+
+function Write-DayHeaders($monthCount) {
+    for ($i = 0; $i -lt $monthCount; $i++) {
+        Write-DayNames
+        Write-Spacing
+    }
+}
+
+function Write-NextMonthLine($month, $currentDate) {
+    if ($month.IsFinished) {
+        return
+    }
+
+    $startDate = $month.NextWeekStartDate
+    Write-Week $startDate $month.MonthNumber $currentDate
+
+    $month.NextWeekStartDate = $month.NextWeekStartDate.AddDays(7)
+    if ($month.NextWeekStartDate.Month -ne $month.MonthNumber) {
+        $month.IsFinished = $true
+    }
+}
+
 function Show-Calendar {
     $now = [DateTime]::Today
 
-    Show-Month $now.Month $now.Year $now
+    $prevMonth = $now.AddMonths(-1)
+    $nextMonth = $now.AddMonths(1)
+
+    $months = @()
+    $months += @( New-MonthState $prevMonth.Month $prevMonth.Year )
+    $months += @( New-MonthState $now.Month $now.Year )
+    $months += @( New-MonthState $nextMonth.Month $nextMonth.Year )
+
+
+    Write-MonthNames $months
+    Write-Host
+    Write-DayHeaders $months.Count
+    Write-Host
+
+    $allMonthsFinished = $false
+
+    while (-not $allMonthsFinished) {
+        $allMonthsFinished = $true
+
+        foreach ($month in $months) {
+            Write-NextMonthLine $month $now
+            Write-Spacing
+
+            $allMonthsFinished = $allMonthsFinished -and $month.IsFinished
+        }
+
+        Write-Host
+    }
 }
