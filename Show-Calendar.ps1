@@ -186,10 +186,12 @@ function Show-Months($startMonth, $startYear, $monthCount, $monthsPerRow, $curre
             Write-Host
         }
 
-        Write-Host
-
         $rowStartDate = $rowStartDate.AddMonths($monthsInRow)
         $monthsLeft -= $monthsInRow
+
+        if ($monthsLeft -gt 0) {
+            Write-Host
+        }
     }
 }
 
