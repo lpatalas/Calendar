@@ -164,7 +164,7 @@ function Show-Months($startMonth, $startYear, $monthCount, $monthsPerRow, $curre
 
     while ($monthsLeft -gt 0) {
         $monthsInRow = [Math]::Min($monthsLeft, $monthsPerRow)
-        $months = Create-RowState $rowStartDate.Month $rowStartDate.Year $monthsInRow
+        $months = @( Create-RowState $rowStartDate.Month $rowStartDate.Year $monthsInRow )
 
         Write-MonthNames $months
         Write-Host
@@ -194,7 +194,25 @@ function Show-Months($startMonth, $startYear, $monthCount, $monthsPerRow, $curre
 }
 
 function Show-Calendar {
-    $now = [DateTime]::Today
+    param(
+        [Parameter(Position = 0)]
+        [Int32] $Year = $null,
 
-    Show-Months 1 $now.Year 12 3 $now
+        [Parameter(Position = 1)]
+        [Int32] $Month = $null
+    )
+
+    $now = [DateTime]::Today
+    $monthCount = 1
+
+    if (-not $Year) {
+        $Year = $now.Year
+        $Month = $now.Month
+    }
+    elseif (-not $Month) {
+        $Month = 1
+        $monthCount = 12
+    }
+
+    Show-Months $Month $Year $monthCount 3 $now
 }
