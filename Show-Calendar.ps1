@@ -1,6 +1,28 @@
 
 $firstDayOffsets = @( 6, 0, 1, 2, 3, 4, 5 )
 $dayNames = [Globalization.CultureInfo]::CurrentCulture.DateTimeFormat.ShortestDayNames
+$monthNames = [Globalization.CultureInfo]::CurrentCulture.DateTimeFormat.MonthNames
+$monthWidth = 20
+
+function Center-String($str, $totalWidth) {
+    if ($str.Length -lt $totalWidth) {
+        $leftPadding = ($totalWidth - $str.Length) / 2
+        $str = $str.PadRight($totalWidth - $leftPadding)
+        $str = $str.PadLeft($totalWidth)
+    }
+
+    return $str
+}
+
+function Get-MonthName($monthNumber) {
+    return $monthNames[$monthNumber - 1]
+}
+
+function Write-MonthName($month, $year) {
+    $title = '{0} {1}' -f (Get-MonthName $month), $year
+    $text = Center-String $title $monthWidth
+    Write-Host $text -ForegroundColor Yellow
+}
 
 function Write-DayNames($NoNewLine = $false) {
     Write-Host ('{1,2} {2,2} {3,2} {4,2} {5,2} {6,2} {0,2}' -f $dayNames) -NoNewLine:$NoNewLine
@@ -48,6 +70,7 @@ function Show-Month($month, $year, $currentDate) {
     $firstDayOffset = $firstDayOffsets[$startDate.DayOfWeek]
     $startDate = $startDate.AddDays(-$firstDayOffset)
 
+    Write-MonthName $month $year
     Write-DayNames
     do {
         Write-Week $startDate $month $currentDate
