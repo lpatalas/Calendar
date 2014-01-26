@@ -133,6 +133,7 @@ function Write-DayHeaders($monthCount) {
 
 function Write-NextMonthLine($month, $currentDate) {
     if ($month.IsFinished) {
+        Write-Host (' ' * $monthWidth) -NoNewLine
         return
     }
 
@@ -145,35 +146,55 @@ function Write-NextMonthLine($month, $currentDate) {
     }
 }
 
-function Show-Calendar {
-    $now = [DateTime]::Today
-
-    $prevMonth = $now.AddMonths(-1)
-    $nextMonth = $now.AddMonths(1)
-
+function Create-RowState($startMonth, $startYear, $monthCount) {
     $months = @()
-    $months += @( New-MonthState $prevMonth.Month $prevMonth.Year )
-    $months += @( New-MonthState $now.Month $now.Year )
-    $months += @( New-MonthState $nextMonth.Month $nextMonth.Year )
+    $firstDayOfMonth = New-Object DateTime($startYear, $startMonth, 1)
 
+    for ($i = 0; $i -lt $monthCount; $i++) {
+        $months += @( New-MonthState $firstDayOfMonth.Month $firstDayOfMonth.Year )  
+        $firstDayOfMonth = $firstDayOfMonth.AddMonths(1)
+    }
 
-    Write-MonthNames $months
-    Write-Host
-    Write-DayHeaders $months.Count
-    Write-Host
+    return $months
+}
 
-    $allMonthsFinished = $false
+function Show-Months($startMonth, $startYear, $monthCount, $monthsPerRow, $currentDate) {
+    $monthsLeft = $monthCount
+    $rowStartDate = New-Object DateTime($startYear, $startMonth, 1)
 
-    while (-not $allMonthsFinished) {
-        $allMonthsFinished = $true
+    while ($monthsLeft -gt 0) {
+        $monthsInRow = [Math]::Min($monthsLeft, $monthsPerRow)
+        $months = Create-RowState $rowStartDate.Month $rowStartDate.Year $monthsInRow
 
-        foreach ($month in $months) {
-            Write-NextMonthLine $month $now
-            Write-Spacing
+        Write-MonthNames $months
+        Write-Host
+        Write-DayHeaders $months.Count
+        Write-Host
 
-            $allMonthsFinished = $allMonthsFinished -and $month.IsFinished
+        $allMonthsFinished = $false
+
+        while (-not $allMonthsFinished) {
+            $allMonthsFinished = $true
+
+            foreach ($month in $months) {
+                Write-NextMonthLine $month $now
+                Write-Spacing
+
+                $allMonthsFinished = $allMonthsFinished -and $month.IsFinished
+            }
+
+            Write-Host
         }
 
         Write-Host
+
+        $rowStartDate = $rowStartDate.AddMonths($monthsInRow)
+        $monthsLeft -= $monthsInRow
     }
+}
+
+function Show-Calendar {
+    $now = [DateTime]::Today
+
+    Show-Months 1 $now.Year 12 3 $now
 }
