@@ -2,7 +2,8 @@
 $firstDayOffsets = @( 6, 0, 1, 2, 3, 4, 5 )
 $dayNames = [Globalization.CultureInfo]::CurrentCulture.DateTimeFormat.ShortestDayNames
 $monthNames = [Globalization.CultureInfo]::CurrentCulture.DateTimeFormat.MonthNames
-$monthWidth = 20
+$calendar = [Globalization.CultureInfo]::CurrentCulture.Calendar
+$monthWidth = 23
 $monthSpacingLength = 5
 $monthSpacing = ' ' * $monthSpacingLength
 
@@ -50,6 +51,10 @@ function Get-CenteredMonthName($month, $year) {
     return Center-String (Get-MonthName $month $year) $monthWidth
 }
 
+function Get-WeekOfYear($date) {
+    return $calendar.GetWeekOfYear($date, [Globalization.CalendarWeekRule]::FirstFourDayWeek, [DayOfWeek]::Monday)
+}
+
 function Write-MonthName($month, $year) {
     $title = '{0} {1}' -f (Get-MonthName $month), $year
     $text = Center-String $title $monthWidth
@@ -85,8 +90,15 @@ function Write-Day($dayDate, $month, $currentDate) {
     Write-Host ('{0,2}' -f $dayDate.Day) -NoNewLine -ForegroundColor:$foregroundColor -BackgroundColor:$backgroundColor
 }
 
+function Write-WeekNumber($weekStartDate) {
+    $weekNumber = Get-WeekOfYear $weekStartDate
+    Write-Host ('{0,2} ' -f $weekNumber) -NoNewLine -ForegroundColor DarkYellow
+}
+
 function Write-Week($weekStartDate, $month, $currentDate) {
     $dayDate = $weekStartDate
+
+    Write-WeekNumber $weekStartDate.AddDays(6)
 
     for ($i = 0; $i -lt 7; $i++) {
         Write-Day $dayDate $month $currentDate
@@ -124,8 +136,13 @@ function Write-MonthNames($months) {
     }
 }
 
+function Write-WeekNumberPadding {
+    Write-Host '   ' -NoNewLine
+}
+
 function Write-DayHeaders($monthCount) {
     for ($i = 0; $i -lt $monthCount; $i++) {
+        Write-WeekNumberPadding
         Write-DayNames
         Write-Spacing
     }
