@@ -228,13 +228,17 @@ function Show-Calendar {
     $now = [DateTime]::Today
     $monthCount = 1
 
-    if (-not $Year) {
-        $Year = $now.Year
-        $Month = $now.Month
-    }
-    elseif (-not $Month) {
+    if ($Year -and !$Month) {
         $Month = 1
         $monthCount = 12
+    }
+    else {
+        if (!$Year) {
+            $Year = $now.Year
+        }
+        if (!$Month) {
+            $Month = $now.Month
+        }
     }
 
     $startDate = New-Object DateTime($Year, $Month, 1)
