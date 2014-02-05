@@ -176,6 +176,7 @@ function Create-RowState($startMonth, $startYear, $monthCount) {
 }
 
 function Show-Months($months, $monthsPerRow, $currentDate) {
+    $months = @( $months )
     $monthCount = $months.Count
     $monthsInRow = @()
 
@@ -211,6 +212,27 @@ function Show-Months($months, $monthsPerRow, $currentDate) {
             }
         }
     }
+}
+
+function Get-UniqueDays($dates) {
+    $datesSet = New-Object 'System.Collections.Generic.HashSet[System.DateTime]'
+
+    foreach ($date in $dates) {
+        $datesSet.Add($date.Date) | Out-Null
+    }
+
+    return $datesSet
+}
+
+function Get-UniqueMonths($dates) {
+    $monthsSet = New-Object 'System.Collections.Generic.HashSet[System.DateTime]'
+
+    foreach ($date in $dates) {
+        $monthStart = New-Object DateTime($date.Year, $date.Month, 1)
+        $monthsSet.Add($monthStart) | Out-Null
+    }
+
+    return $monthsSet
 }
 
 function Show-Calendar {
@@ -261,11 +283,11 @@ function Show-Calendar {
     elseif ($PsCmdlet.ParameterSetName -eq "Dates") {
         $pipedInput = @( $Input )
         if ($pipedInput) {
-            $monthsToDisplay = $pipedInput
+            $Dates = $pipedInput
         }
-        else {
-            $monthsToDisplay = @( $Dates )
-        }
+
+        $Dates = Get-UniqueDays $Dates
+        $monthsToDisplay = Get-UniqueMonths $Dates
     }
 
     Show-Months $monthsToDisplay 3 $now
