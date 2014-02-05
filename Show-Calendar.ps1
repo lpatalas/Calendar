@@ -226,7 +226,7 @@ function Show-Calendar {
         [Parameter(ParameterSetName = "Date", Position = 0, ValueFromPipeline = $true)]
         [DateTime] $Date = $null,
 
-        [switch] $Three
+        [Int32] $Context = 0
     )
 
     $now = [DateTime]::Today
@@ -251,9 +251,9 @@ function Show-Calendar {
 
     $startDate = New-Object DateTime($Year, $Month, 1)
 
-    if ($Three -and ($monthCount -eq 1)) {
-        $startDate = $startDate.AddMonths(-1)
-        $monthCount = 3
+    if ($Context) {
+        $startDate = $startDate.AddMonths(-$Context)
+        $monthCount += $Context * 2
     }
 
     Show-Months $startDate.Month $startDate.Year $monthCount 3 $now
