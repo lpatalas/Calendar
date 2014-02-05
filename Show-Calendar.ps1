@@ -224,40 +224,49 @@ function Show-Calendar {
         [ValidateRange(1, 12)]
         [Int32] $Month = $null,
 
-        [Parameter(ParameterSetName = "Date", Position = 0, ValueFromPipeline = $true)]
-        [DateTime] $Date = $null,
+        [Alias("Date")]
+        [Parameter(ParameterSetName = "Dates", Position = 0, ValueFromPipeline = $true)]
+        [DateTime[]] $Dates = $null,
 
         [Int32] $Context = 0
     )
 
     $now = [DateTime]::Today
-    $monthCount = 1
 
-    if ($PsCmdlet.ParameterSetName -eq "Date") {
-        $Year = $Date.Year
-        $Month = $Date.Month
-        $now = $Date.Date
-    }
-    elseif ($Year -and !$Month) {
-        $Month = 1
-        $monthCount = 12
-    }
-    else {
-        if (!$Year) {
-            $Year = $now.Year
+    if ($PsCmdlet.ParameterSetName -eq "YearMonth") {
+        $monthCount = 1
+
+        if ($Year -and !$Month) {
+            $Month = 1
+            $monthCount = 12
         }
-        if (!$Month) {
-            $Month = $now.Month
+        else {
+            if (!$Year) {
+                $Year = $now.Year
+            }
+            if (!$Month) {
+                $Month = $now.Month
+            }
+        }
+
+        $startDate = New-Object DateTime($Year, $Month, 1)
+
+        if ($Context) {
+            $startDate = $startDate.AddMonths(-$Context)
+            $monthCount += $Context * 2
+        }
+
+        $monthsToDisplay = @( 0..($monthCount - 1) | %{ $startDate.AddMonths($_) } )
+    }
+    elseif ($PsCmdlet.ParameterSetName -eq "Dates") {
+        $pipedInput = @( $Input )
+        if ($pipedInput) {
+            $monthsToDisplay = $pipedInput
+        }
+        else {
+            $monthsToDisplay = @( $Dates )
         }
     }
 
-    $startDate = New-Object DateTime($Year, $Month, 1)
-
-    if ($Context) {
-        $startDate = $startDate.AddMonths(-$Context)
-        $monthCount += $Context * 2
-    }
-
-    $monthsToDisplay = @( 0..($monthCount - 1) | %{ $startDate.AddMonths($_) } )
     Show-Months $monthsToDisplay 3 $now
 }
