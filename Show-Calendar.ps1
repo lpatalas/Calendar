@@ -175,39 +175,40 @@ function Create-RowState($startMonth, $startYear, $monthCount) {
     return $months
 }
 
-function Show-Months($startMonth, $startYear, $monthCount, $monthsPerRow, $currentDate) {
-    $monthsLeft = $monthCount
-    $rowStartDate = New-Object DateTime($startYear, $startMonth, 1)
+function Show-Months($months, $monthsPerRow, $currentDate) {
+    $monthCount = $months.Count
+    $monthsInRow = @()
 
-    while ($monthsLeft -gt 0) {
-        $monthsInRow = [Math]::Min($monthsLeft, $monthsPerRow)
-        $months = @( Create-RowState $rowStartDate.Month $rowStartDate.Year $monthsInRow )
+    for ($i = 0; $i -lt $monthCount; $i++) {
+        $isLastMonth = ($i -eq ($monthCount - 1))
+        $monthStartDate = $months[$i]
+        $monthsInRow += @( New-MonthState $monthStartDate.Month $monthStartDate.Year )
 
-        Write-MonthNames $months
-        Write-Host
-        Write-DayHeaders $months.Count
-        Write-Host
+        if (($monthsInRow.Count -eq $monthsPerRow) -or $isLastMonth) {
+            Write-MonthNames $monthsInRow
+            Write-Host
+            Write-DayHeaders $monthsInRow.Count
+            Write-Host
 
-        $allMonthsFinished = $false
+            $allMonthsFinished = $false
 
-        while (-not $allMonthsFinished) {
-            $allMonthsFinished = $true
+            while (-not $allMonthsFinished) {
+                $allMonthsFinished = $true
 
-            foreach ($month in $months) {
-                Write-NextMonthLine $month $now
-                Write-Spacing
+                foreach ($month in $monthsInRow) {
+                    Write-NextMonthLine $month $now
+                    Write-Spacing
 
-                $allMonthsFinished = $allMonthsFinished -and $month.IsFinished
+                    $allMonthsFinished = $allMonthsFinished -and $month.IsFinished
+                }
+
+                Write-Host
             }
 
-            Write-Host
-        }
-
-        $rowStartDate = $rowStartDate.AddMonths($monthsInRow)
-        $monthsLeft -= $monthsInRow
-
-        if ($monthsLeft -gt 0) {
-            Write-Host
+            if (!$isLastMonth) {
+                $monthsInRow = @()
+                Write-Host
+            }
         }
     }
 }
@@ -257,5 +258,6 @@ function Show-Calendar {
         $monthCount += $Context * 2
     }
 
-    Show-Months $startDate.Month $startDate.Year $monthCount 3 $now
+    $monthsToDisplay = @( 0..($monthCount - 1) | %{ $startDate.AddMonths($_) } )
+    Show-Months $monthsToDisplay 3 $now
 }
