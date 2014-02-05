@@ -7,6 +7,7 @@ $commands = @(
     'Show-Calendar -Context 3'
     'Show-Calendar (Get-Date).AddMonths(3)'
     'Get-Date | Show-Calendar'
+    '1..5 | %{ Get-Date -Year 2014 -Month ($_ * 2) } | Show-Calendar'
 )
 
 foreach ($command in $commands) {
