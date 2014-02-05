@@ -222,7 +222,7 @@ function Show-Calendar {
         [ValidateRange(1, 12)]
         [Int32] $Month = $null,
 
-        [Parameter(ParameterSetName = "Date", Position = 0)]
+        [Parameter(ParameterSetName = "Date", Position = 0, ValueFromPipeline = $true)]
         [DateTime] $Date = $null,
 
         [switch] $Three
