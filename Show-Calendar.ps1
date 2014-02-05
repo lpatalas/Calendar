@@ -235,6 +235,7 @@ function Show-Calendar {
     if ($PsCmdlet.ParameterSetName -eq "Date") {
         $Year = $Date.Year
         $Month = $Date.Month
+        $now = $Date.Date
     }
     elseif ($Year -and !$Month) {
         $Month = 1
