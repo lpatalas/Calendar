@@ -213,6 +213,7 @@ function Show-Months($startMonth, $startYear, $monthCount, $monthsPerRow, $curre
 }
 
 function Show-Calendar {
+    [CmdletBinding(DefaultParameterSetName = "YearMonth")]
     param(
         [Parameter(ParameterSetName = "YearMonth", Position = 0)]
         [ValidateRange(1, 9999)]
