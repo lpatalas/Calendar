@@ -214,13 +214,16 @@ function Show-Months($startMonth, $startYear, $monthCount, $monthsPerRow, $curre
 
 function Show-Calendar {
     param(
-        [Parameter(Position = 0)]
+        [Parameter(ParameterSetName = "YearMonth", Position = 0)]
         [ValidateRange(1, 9999)]
         [Int32] $Year = $null,
 
-        [Parameter(Position = 1)]
+        [Parameter(ParameterSetName = "YearMonth", Position = 1)]
         [ValidateRange(1, 12)]
         [Int32] $Month = $null,
+
+        [Parameter(ParameterSetName = "Date", Position = 0)]
+        [DateTime] $Date = $null,
 
         [switch] $Three
     )
@@ -228,7 +231,11 @@ function Show-Calendar {
     $now = [DateTime]::Today
     $monthCount = 1
 
-    if ($Year -and !$Month) {
+    if ($PsCmdlet.ParameterSetName -eq "Date") {
+        $Year = $Date.Year
+        $Month = $Date.Month
+    }
+    elseif ($Year -and !$Month) {
         $Month = 1
         $monthCount = 12
     }
