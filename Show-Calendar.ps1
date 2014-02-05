@@ -215,9 +215,11 @@ function Show-Months($startMonth, $startYear, $monthCount, $monthsPerRow, $curre
 function Show-Calendar {
     param(
         [Parameter(Position = 0)]
+        [ValidateRange(1, 9999)]
         [Int32] $Year = $null,
 
         [Parameter(Position = 1)]
+        [ValidateRange(1, 12)]
         [Int32] $Month = $null,
 
         [switch] $Three
