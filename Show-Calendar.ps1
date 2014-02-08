@@ -100,15 +100,24 @@ function Write-Week($weekStartDate, $month, $markedDates) {
 
     Write-WeekNumber $weekStartDate.AddDays(6)
 
+    $previousDayMarked = $false
+
     for ($i = 0; $i -lt 7; $i++) {
         $isDayMarked = $markedDates -contains $dayDate
-        Write-Day $dayDate $month $isDayMarked
 
-        if ($i -lt 6) {
-            Write-Host ' ' -NoNewLine
+        if ($i -gt 0) {
+            if ($isDayMarked -and $previousDayMarked) {
+                Write-Host ' ' -NoNewLine -BackgroundColor White
+            }
+            else {
+                Write-Host ' ' -NoNewLine
+            }
         }
 
+        Write-Day $dayDate $month $isDayMarked
+
         $dayDate = $dayDate.AddDays(1)
+        $previousDayMarked = $isDayMarked
     }
 }
 
