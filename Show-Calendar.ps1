@@ -65,7 +65,7 @@ function Write-DayNames {
     Write-Host ('{1,2} {2,2} {3,2} {4,2} {5,2} {6,2} {0,2}' -f $dayNames) -NoNewLine -ForegroundColor DarkYellow
 }
 
-function Write-Day($dayDate, $month, $currentDate) {
+function Write-Day($dayDate, $month, $isMarked) {
     $color = [ConsoleColor]::White
 
     if ($dayDate.Month -ne $month) {
@@ -78,7 +78,7 @@ function Write-Day($dayDate, $month, $currentDate) {
         $color = [ConsoleColor]::Red
     }
 
-    if ($dayDate -eq $currentDate) {
+    if ($isMarked) {
         $foregroundColor = [ConsoleColor]::Black
         $backgroundColor = $color
     }
@@ -95,13 +95,14 @@ function Write-WeekNumber($weekStartDate) {
     Write-Host ('{0,2} ' -f $weekNumber) -NoNewLine -ForegroundColor DarkYellow
 }
 
-function Write-Week($weekStartDate, $month, $currentDate) {
+function Write-Week($weekStartDate, $month, $markedDates) {
     $dayDate = $weekStartDate
 
     Write-WeekNumber $weekStartDate.AddDays(6)
 
     for ($i = 0; $i -lt 7; $i++) {
-        Write-Day $dayDate $month $currentDate
+        $isDayMarked = $markedDates -contains $dayDate
+        Write-Day $dayDate $month $isDayMarked
 
         if ($i -lt 6) {
             Write-Host ' ' -NoNewLine
@@ -111,7 +112,7 @@ function Write-Week($weekStartDate, $month, $currentDate) {
     }
 }
 
-function Show-Month($month, $year, $currentDate) {
+function Show-Month($month, $year, $markedDates) {
     $startDate = New-Object DateTime($year, $month, 1)
     $firstDayOffset = $firstDayOffsets[$startDate.DayOfWeek]
     $startDate = $startDate.AddDays(-$firstDayOffset)
@@ -119,7 +120,7 @@ function Show-Month($month, $year, $currentDate) {
     Write-MonthName $month $year
     Write-DayNames
     do {
-        Write-Week $startDate $month $currentDate
+        Write-Week $startDate $month $markedDates
         $startDate = $startDate.AddDays(7)
     }
     while ($startDate.Month -eq $month)
@@ -148,14 +149,14 @@ function Write-DayHeaders($monthCount) {
     }
 }
 
-function Write-NextMonthLine($month, $currentDate) {
+function Write-NextMonthLine($month, $markedDates) {
     if ($month.IsFinished) {
         Write-Host (' ' * $monthWidth) -NoNewLine
         return
     }
 
     $startDate = $month.NextWeekStartDate
-    Write-Week $startDate $month.MonthNumber $currentDate
+    Write-Week $startDate $month.MonthNumber $markedDates
 
     $month.NextWeekStartDate = $month.NextWeekStartDate.AddDays(7)
     if ($month.NextWeekStartDate.Month -ne $month.MonthNumber) {
@@ -175,7 +176,7 @@ function Create-RowState($startMonth, $startYear, $monthCount) {
     return $months
 }
 
-function Show-Months($months, $monthsPerRow, $currentDate) {
+function Show-Months($months, $monthsPerRow, $markedDates) {
     $months = @( $months )
     $monthCount = $months.Count
     $monthsInRow = @()
@@ -197,7 +198,7 @@ function Show-Months($months, $monthsPerRow, $currentDate) {
                 $allMonthsFinished = $true
 
                 foreach ($month in $monthsInRow) {
-                    Write-NextMonthLine $month $now
+                    Write-NextMonthLine $month $markedDates
                     Write-Spacing
 
                     $allMonthsFinished = $allMonthsFinished -and $month.IsFinished
@@ -254,6 +255,7 @@ function Show-Calendar {
     )
 
     $now = [DateTime]::Today
+    [DateTime[]] $markedDates = @()
 
     if ($PsCmdlet.ParameterSetName -eq "YearMonth") {
         $monthCount = 1
@@ -279,6 +281,7 @@ function Show-Calendar {
         }
 
         $monthsToDisplay = @( 0..($monthCount - 1) | %{ $startDate.AddMonths($_) } )
+        $markedDates += @( $now )
     }
     elseif ($PsCmdlet.ParameterSetName -eq "Dates") {
         $pipedInput = @( $Input )
@@ -286,9 +289,10 @@ function Show-Calendar {
             $Dates = $pipedInput
         }
 
-        $Dates = Get-UniqueDays $Dates
-        $monthsToDisplay = Get-UniqueMonths $Dates
+        $uniqueDays = Get-UniqueDays $Dates
+        $monthsToDisplay = Get-UniqueMonths $uniqueDays
+        $markedDates = @( $uniqueDays )
     }
 
-    Show-Months $monthsToDisplay 3 $now
+    Show-Months $monthsToDisplay 3 $markedDates
 }
