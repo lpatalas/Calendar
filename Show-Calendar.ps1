@@ -87,7 +87,8 @@ function Write-Day($dayDate, $month, $isMarked) {
         $backgroundColor = [ConsoleColor]::Black
     }
 
-    Write-Host ('{0,2}' -f $dayDate.Day) -NoNewLine -ForegroundColor:$foregroundColor -BackgroundColor:$backgroundColor
+    $dayNameLength = $dayNames[$dayDate.DayOfWeek].Length
+    Write-Host ("{0,$dayNameLength}" -f $dayDate.Day) -NoNewLine -ForegroundColor:$foregroundColor -BackgroundColor:$backgroundColor
 }
 
 function Write-WeekNumber($weekStartDate) {
